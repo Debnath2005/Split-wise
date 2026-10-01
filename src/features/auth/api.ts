@@ -34,7 +34,8 @@ export async function setNewPassword(password: string) {
   if (error) throw error
 }
 
-export async function signOut() {
-  const { error } = await supabase.auth.signOut()
+/** `local` clears this device's session without calling the server (e.g. the user no longer exists). */
+export async function signOut(scope: 'global' | 'local' = 'global') {
+  const { error } = await supabase.auth.signOut({ scope })
   if (error) throw error
 }

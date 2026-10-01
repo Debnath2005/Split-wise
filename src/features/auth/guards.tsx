@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
-import { Alert, Spinner } from '@/components/ui'
+import { Spinner } from '@/components/ui'
+import { ProfileLoadError } from '@/features/account/ProfileLoadError'
 import { useProfile } from '@/features/account/useProfile'
 import { useAuth } from './AuthContext'
 
@@ -20,11 +21,7 @@ export function RequireOnboarded() {
   const profile = useProfile()
   if (profile.isPending) return <Spinner fullPage />
   if (profile.isError) {
-    return (
-      <div className="mx-auto max-w-md p-4">
-        <Alert>Couldn't load your profile. Check your connection and refresh.</Alert>
-      </div>
-    )
+    return <ProfileLoadError error={profile.error} onRetry={() => void profile.refetch()} />
   }
   if (!profile.data.onboarded_at) return <Navigate to="/onboarding" replace />
   return <Outlet />

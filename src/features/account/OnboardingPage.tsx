@@ -4,6 +4,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { Alert, Button, PageHeader, Spinner } from '@/components/ui'
 import type { Profile } from './api'
 import { ProfileFields } from './ProfileFields'
+import { ProfileLoadError } from './ProfileLoadError'
 import { profileSchema, toProfilePatch, type ProfileForm } from './profileSchema'
 import { useProfile, useUpdateProfile } from './useProfile'
 
@@ -11,11 +12,7 @@ export function OnboardingPage() {
   const profile = useProfile()
   if (profile.isPending) return <Spinner fullPage />
   if (profile.isError) {
-    return (
-      <main className="mx-auto max-w-md p-4">
-        <Alert>Couldn't load your profile. Check your connection and refresh.</Alert>
-      </main>
-    )
+    return <ProfileLoadError error={profile.error} onRetry={() => void profile.refetch()} />
   }
   if (profile.data.onboarded_at) return <Navigate to="/" replace />
   return <OnboardingForm profile={profile.data} />

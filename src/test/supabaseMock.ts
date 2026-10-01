@@ -11,9 +11,17 @@ export const state: {
   session: Session | null
   profile: Profile | null
   failProfileUpdate: boolean
+  failProfileFetch: boolean
   updates: { table: string; patch: unknown; filters: Record<string, unknown> }[]
   listeners: Set<Listener>
-} = { session: null, profile: null, failProfileUpdate: false, updates: [], listeners: new Set() }
+} = {
+  session: null,
+  profile: null,
+  failProfileUpdate: false,
+  failProfileFetch: false,
+  updates: [],
+  listeners: new Set(),
+}
 
 export function makeSession(userId = 'user-1'): Session {
   return {
@@ -48,6 +56,7 @@ export function resetMock() {
   state.session = null
   state.profile = null
   state.failProfileUpdate = false
+  state.failProfileFetch = false
   state.updates = []
   state.listeners.clear()
   for (const fn of Object.values(supabase.auth)) fn.mockClear()
@@ -68,9 +77,12 @@ function from(table: string) {
       state.updates.push({ table, patch, filters: { ...filters } })
       if (matches && state.profile) state.profile = { ...state.profile, ...patch }
     }
+    if (!patch && state.failProfileFetch) {
+      return { data: null, error: { code: 'NETWORK', message: 'Failed to fetch' } }
+    }
     return matches
       ? { data: state.profile, error: null }
-      : { data: null, error: { message: 'no rows' } }
+      : { data: null, error: { code: 'PGRST116', message: 'The result contains 0 rows' } }
   }
   const builder = {
     select: () => builder,
@@ -107,7 +119,7 @@ export const supabase = {
     updateUser: vi.fn<(attrs: { password: string }) => Promise<{ data: object; error: unknown }>>(
       () => Promise.resolve({ data: {}, error: null }),
     ),
-    signOut: vi.fn(() => {
+    signOut: vi.fn<(opts?: { scope?: 'global' | 'local' }) => Promise<{ error: unknown }>>(() => {
       state.session = null
       emit('SIGNED_OUT')
       return Promise.resolve({ error: null })

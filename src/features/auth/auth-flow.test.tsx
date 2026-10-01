@@ -153,7 +153,7 @@ describe('account', () => {
   it('signs out and returns to /login', async () => {
     const router = renderApp('/account')
     await userEvent.click(await screen.findByRole('button', { name: 'Sign out' }))
-    expect(supabase.auth.signOut).toHaveBeenCalled()
+    expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'global' })
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
   })
 })
@@ -169,5 +169,47 @@ describe('account save failure', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't save")
     expect(name).toHaveValue('Asha Rao K')
+  })
+})
+
+describe('profile load failures', () => {
+  it('signs out locally when the account no longer exists (PGRST116)', async () => {
+    state.session = makeSession()
+    state.profile = null // e.g. local db reset or deleted account, but a stale session remains
+    const router = renderApp('/groups')
+    expect(await screen.findByRole('button', { name: 'Sign in' })).toBeInTheDocument()
+    expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
+    expect(router.state.location.pathname).toBe('/login')
+  })
+
+  it('offers Retry and Sign out on other errors', async () => {
+    state.session = makeSession()
+    state.profile = makeProfile()
+    state.failProfileFetch = true
+    renderApp('/')
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load your profile")
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+
+    state.failProfileFetch = false
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Home' })).toBeInTheDocument()
+  })
+
+  it('lets the user sign out from the error screen', async () => {
+    state.session = makeSession()
+    state.profile = makeProfile()
+    state.failProfileFetch = true
+    const router = renderApp('/')
+    await userEvent.click(await screen.findByRole('button', { name: 'Sign out' }))
+    expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
+    await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
+  })
+
+  it('handles a missing profile on /onboarding too', async () => {
+    state.session = makeSession()
+    state.profile = null
+    const router = renderApp('/onboarding')
+    await screen.findByRole('button', { name: 'Sign in' })
+    expect(router.state.location.pathname).toBe('/login')
   })
 })
