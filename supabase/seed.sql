@@ -1,0 +1,1 @@
+-- Local dev seed data (applied by `npm run db:reset`). Empty until M1 adds tables.
