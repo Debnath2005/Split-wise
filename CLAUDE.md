@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Splitwise-style expense splitter, mobile-first, INR only. Stack: Vite + React + TypeScript, Tailwind, TanStack Query, Supabase (Google OAuth, Postgres, RLS, RPCs). Build order follows the SPEC.md milestones (M0–M10).
+Splitwise-style expense splitter, mobile-first, INR only. Stack: Vite + React + TypeScript, Tailwind, TanStack Query, Supabase (email + password auth, Postgres, RLS, RPCs). Build order follows the SPEC.md milestones (M0–M10).
 
 ## Rules
 

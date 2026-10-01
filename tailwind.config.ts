@@ -18,6 +18,7 @@ export default {
         fg: 'var(--color-fg)',
         muted: 'var(--color-muted)',
         line: 'var(--color-line)',
+        'control-border': 'var(--color-control-border)',
         'nav-active': 'var(--color-nav-active)',
         'nav-active-fg': 'var(--color-nav-active-fg)',
       },

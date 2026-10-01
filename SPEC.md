@@ -20,7 +20,8 @@ A Splitwise-style web app for splitting expenses. It is mobile-first, INR only, 
 - Receipt photos, comments on expenses, recurring expenses, categories/charts.
 - Checking that a UPI payment actually went through, or any payment gateway integration.
 - Native apps, push notifications, offline writes.
-- Email/password, magic link, or phone login.
+- Magic link or phone login.
+- Email confirmation on sign-up (needs custom SMTP; see ADR 0017).
 
 ---
 
@@ -33,7 +34,7 @@ A Splitwise-style web app for splitting expenses. It is mobile-first, INR only, 
 | Server state | TanStack Query v5 |
 | Forms / validation | React Hook Form + Zod |
 | Styling | Tailwind CSS v3, mobile-first, `prefers-color-scheme` dark mode |
-| Backend | Supabase: Postgres, Auth (Google OAuth), Row Level Security, RPC functions |
+| Backend | Supabase: Postgres, Auth (email + password, Google OAuth), Row Level Security, RPC functions |
 | Types | `supabase gen types typescript` → `src/types/database.ts` |
 | QR (desktop UPI fallback) | `qrcode` npm package |
 | Unit tests | Vitest |
@@ -65,16 +66,18 @@ A Splitwise-style web app for splitting expenses. It is mobile-first, INR only, 
 
 ## 4. Features
 
-### 4.1 Login (Google OAuth)
-- Signing in uses `supabase.auth.signInWithOAuth({ provider: 'google' })` with redirect URL `${origin}/auth/callback`.
-- On the first sign-in, an `auth.users` insert trigger creates the `profiles` row, copying the name, email, and avatar from the Google metadata.
+### 4.1 Login (email + password; Google deferred; ADRs 0017, 0018)
+- **Email + password** is the main method. `/login` has two modes, **Sign in** (`signInWithPassword`) and **Create account** (`signUp`). Passwords are 8–72 characters. There's no email confirmation, so signing up logs you in immediately.
+- **Forgot password:** `/forgot-password` asks for an email and calls `resetPasswordForEmail` with `redirectTo: ${origin}/reset-password`. It always shows "If an account exists, we've sent a link". `/reset-password` takes a new password (entered twice) and calls `updateUser({ password })`. If the link is expired or invalid, it offers to send a new one. Reset emails need custom SMTP for anyone who isn't a project team member.
+- **Google (deferred, ADR 0018):** a "Continue with Google" button is shown **disabled** with a "Coming soon" note. When it's turned on, it will use `supabase.auth.signInWithOAuth({ provider: 'google' })` with redirect URL `${origin}/auth/callback`.
+- On the first sign-in, an `auth.users` insert trigger creates the `profiles` row, copying the name, email, and avatar from the Google metadata. For email sign-ups the name defaults to the part of the email before `@`.
 - Onboarding, shown once: confirm display name and optionally add a **UPI ID** (VPA). Without a VPA, the user can still be paid by cash/"mark as paid", but not by UPI link.
-- Every route except `/login`, `/auth/callback`, and `/invite/:token` (which shows a login CTA) is protected.
+- Every route except `/login`, `/auth/callback`, `/forgot-password`, `/reset-password`, and `/invite/:token` (which shows a login CTA) is protected.
 - Sign out lives on the Account screen.
 
 ### 4.2 Friends (invite link only)
 - **Add friend:** creates an invite and shows a share sheet. On mobile this calls `navigator.share()`; otherwise it copies the link. The link is `https://<app>/invite/<token>`.
-- **Accepting:** the recipient opens the link and signs in with Google if needed. The page shows "Ravi invited you to Split-Wise" with an Accept button. Accepting calls `accept_invite(token)`, which creates the friendship (both directions are implied by one row).
+- **Accepting:** the recipient opens the link and signs in or creates an account if needed. The page shows "Ravi invited you to Split-Wise" with an Accept button. Accepting calls `accept_invite(token)`, which creates the friendship (both directions are implied by one row).
 - Tokens are 32-byte random, single-use for friend invites, and expire after 14 days. The inviter can revoke a pending invite.
 - The Friends list shows each friend with their **net balance across all groups and non-group expenses**: "owes you ₹X", "you owe ₹X", or "settled up".
 - The friend detail page shows the balance breakdown per group plus non-group, the shared expense history, and a **Settle up** button.
@@ -339,7 +342,9 @@ Table policies:
 ## 6. Screens & Routes (mobile-first)
 
 ```
-/login                    Google sign-in button, app pitch
+/login                    Sign in / Create account (email + password), Google button (disabled, "Coming soon"), app pitch
+/forgot-password          request a password-reset email
+/reset-password           set a new password from the reset link
 /auth/callback            OAuth return → redirect to intended route
 /onboarding               name + UPI ID (first login only)
 /                         Dashboard: totals, groups & friends with balances
@@ -420,8 +425,8 @@ Each milestone ends with something deployable, and its acceptance criteria must 
 - **Done when:** `npm run dev`, `npm test`, and `supabase db reset` all succeed, and the preview URL loads on a phone.
 
 ### M1: Auth & Profile (1 day)
-- Google OAuth, `profiles` trigger, protected routes, onboarding (name + UPI ID with validation), Account page, sign out.
-- **Done when:** a new Google user lands on onboarding, then the dashboard. Refreshing keeps the session. RLS stops a user updating another user's profile.
+- Email + password sign-up/sign-in, forgot/reset password, a disabled Google button, `profiles` trigger, protected routes, onboarding (name + UPI ID with validation), Account page, sign out.
+- **Done when:** a new email user lands on onboarding, then the dashboard. A password can be reset through the emailed link. Refreshing keeps the session. RLS stops a user updating another user's profile.
 
 ### M2: Money Library (1 day, can run in parallel with M1)
 - `lib/money`: parse, format, split (equal/exact/percent), simplify, UPI URI, with full unit tests.

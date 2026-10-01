@@ -1,6 +1,6 @@
 # 0012. Google OAuth as the only login
 
-- **Status:** Accepted
+- **Status:** Superseded by [0017](0017-email-password-and-google-login.md)
 - **Date:** 2026-10-01
 
 ## Context

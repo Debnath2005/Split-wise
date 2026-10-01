@@ -15,8 +15,10 @@ Process: [0001](0001-record-architecture-decisions.md). New ADRs start from [tem
 | [0009](0009-soft-deletes.md) | Soft deletes | Accepted |
 | [0010](0010-simplify-debts-client-side.md) | Simplify debts runs on the client only | Accepted |
 | [0011](0011-activity-log-audience.md) | Activity log with explicit audience | Accepted |
-| [0012](0012-google-oauth-only.md) | Google OAuth as the only login | Accepted |
+| [0012](0012-google-oauth-only.md) | Google OAuth as the only login | Superseded by 0017 |
 | [0013](0013-single-payer-per-expense.md) | Exactly one payer per expense | Accepted |
 | [0014](0014-invite-link-only.md) | Friends and members join only by invite link | Accepted |
 | [0015](0015-upi-deep-link-settlement.md) | UPI deep-link settlement, recorded on trust | Accepted |
 | [0016](0016-mobile-first-ui.md) | Mobile-first UI from a shared component set | Accepted |
+| [0017](0017-email-password-and-google-login.md) | Email + password sign-in, Google as a second option | Accepted (Google part superseded by 0018) |
+| [0018](0018-defer-google-sign-in.md) | Defer Google sign-in; button shown as "Coming soon" | Accepted |

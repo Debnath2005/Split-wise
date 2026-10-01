@@ -10,4 +10,11 @@ if (!url || !anonKey) {
   )
 }
 
-export const supabase = createClient<Database>(url, anonKey)
+export const supabase = createClient<Database>(url, anonKey, {
+  auth: {
+    flowType: 'pkce',
+    persistSession: true, // localStorage, so a refresh keeps the session
+    autoRefreshToken: true,
+    detectSessionInUrl: true, // exchanges ?code= on /auth/callback
+  },
+})

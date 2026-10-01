@@ -11,6 +11,7 @@
     --color-line: #e8edeb;
     --color-nav-active: #e3fcf7;
     --color-nav-active-fg: #001e2b;
+    --color-control-border: #c1c7c6;
     color-scheme: light;
   }
 
@@ -23,6 +24,7 @@
       --color-line: #3d4f58;
       --color-nav-active: #112733;
       --color-nav-active-fg: #00ed64;
+      --color-control-border: #3d4f58;
       color-scheme: dark;
     }
   }
